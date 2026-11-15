@@ -89,6 +89,7 @@ async def generate_image(prompt: str) -> bytes | None:
         return None
 
 user_histories = {}
+last_image_prompts = {}  # запоминаем последний промпт для фото
 
 @dp.message(Command("start"))
 async def cmd_start(message: types.Message):
@@ -105,7 +106,7 @@ async def handle_message(message: types.Message):
 
     history = user_histories[user_id]
 
-    photo_keywords = ["фото", "селфи", "покажи", "картин", "изображ", "как ты выглядишь", "пизд", "киск", "голая", "ню", "сиськ", "жоп", "раздень", "анус", "дыроч", "член", "рот"]
+    photo_keywords = ["фото", "селфи", "покажи", "картин", "изображ", "как ты выглядишь", "пизд", "киск", "голая", "ню", "сиськ", "жоп", "раздень", "анус", "дыроч", "член", "рот", "еще", "ещё", "тоже", "то же"]
     is_photo_request = any(kw in text_lower for kw in photo_keywords)
 
     if is_photo_request:
@@ -116,18 +117,24 @@ async def handle_message(message: types.Message):
         extra = ""
         if any(word in text_lower for word in ["пизд", "киск", "голая", "ню", "сиськ", "жоп", "раздвин", "раздень", "дыроч"]):
             extra += ", completely nude, spreading legs, explicit erotic pose, detailed vagina, pussy, uncensored, female genitalia only, no penis, no dick, seductive expression, perfect female anatomy"
-        if any(word in text_lower for word in ["анус", "жоп", "анал"]):
+        if any(word in text_lower for word in ["анус", "жоп", "анал", "попе"]):
             extra += ", showing anus, ass spread, detailed anus"
-        if any(word in text_lower for word in ["член в рот", "в ротик", "сосет", "минет"]):
-            extra += ", sucking dick, oral sex, penis in mouth"
+        if any(word in text_lower for word in ["член в рот", "в ротик", "сосет", "минет", "член в попе", "в жопе"]):
+            extra += ", sucking dick or penis in ass, explicit"
         if any(word in text_lower for word in ["чулк", "stockings", "колгот"]):
             extra += ", wearing stockings, thigh high stockings"
         if any(word in text_lower for word in ["бдсм", "bdsm", "ошейник", "плетк", "домин"]):
             extra += ", bdsm, dominant pose, leather, collar"
         if any(word in text_lower for word in ["лифчик", "белье", "lingerie"]):
             extra += ", sexy lingerie"
+
+        # Если просит "ещё" или "то же самое" — берём предыдущий промпт и дополняем
+        if any(word in text_lower for word in ["еще", "ещё", "тоже", "то же", "тоже самое", "то же самое"]) and user_id in last_image_prompts:
+            img_prompt = last_image_prompts[user_id] + extra
+        else:
+            img_prompt = base_prompt + extra if extra else base_prompt + ", sexy elegant pose, slightly revealing outfit or casual"
         
-        img_prompt = base_prompt + extra if extra else base_prompt + ", sexy elegant pose, slightly revealing outfit or casual"
+        last_image_prompts[user_id] = img_prompt  # сохраняем
         
         image_bytes = await generate_image(img_prompt)
         if image_bytes:
