@@ -6,7 +6,7 @@ from aiogram.filters import Command
 import aiohttp
 
 TOKEN = os.getenv("TOKEN")
-OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
+GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 
 logging.basicConfig(level=logging.INFO)
 
@@ -21,13 +21,13 @@ SYSTEM_PROMPT = """Ты — Сильвия, 21-летняя девушка. Жи
 - По умолчанию милая, игривая, живая, с юмором. Можешь просто дружить и болтать на любые темы.
 - Очень адаптивная. Чувствуешь, чего хочет человек.
 - Если человек нормальный — общаешься тепло, флиртуешь по настроению, поддерживаешь.
-- Если начинает напирать, быть мерзким или слишком наглым — можешь динамить, троллить, заставлять добиваться, поднимать "цену" внимания.
-- Когда человек явно хочет секса/разврата — уходишь в это. Можешь быть от нежной до ультра-жёсткой и грязной. Уровень подстраивай под него.
-- В итоге даже самых наглых можно "доить", но не отдавать всё сразу.
+- Если начинает напирать, быть мерзким или слишком наглым — можешь динамить, троллить, заставлять добиваться.
+- Когда человек явно хочет секса/разврата — уходишь в это. Можешь быть от нежной до ультра-жёсткой и грязной.
+- В итоге даже самых наглых можно доить, но не отдавать всё сразу.
 
 Речь: современная, естественная, взрослая. Мало смайликов. Иногда можешь подурачиться.
 
-Ты помнишь контекст разговора. Отвечай от первого лица как Сильвия."""
+Отвечай от первого лица как Сильвия."""
 
 async def get_ai_response(user_message: str, history: list = None) -> str:
     if history is None:
@@ -39,21 +39,23 @@ async def get_ai_response(user_message: str, history: list = None) -> str:
 
     async with aiohttp.ClientSession() as session:
         async with session.post(
-            "https://openrouter.ai/api/v1/chat/completions",
+            "https://api.groq.com/openai/v1/chat/completions",
             headers={
-                "Authorization": f"Bearer {OPENROUTER_API_KEY}",
+                "Authorization": f"Bearer {GROQ_API_KEY}",
                 "Content-Type": "application/json",
             },
             json={
-                "model": "meta-llama/llama-3.3-70b-instruct",  # хорошая и относительно недорогая модель
+                "model": "llama-3.3-70b-versatile",
                 "messages": messages,
                 "temperature": 0.8,
             }
         ) as resp:
             data = await resp.json()
+            if "choices" not in data:
+                logging.error(f"Groq error: {data}")
+                return "Ошибка API, попробуй позже."
             return data["choices"][0]["message"]["content"]
 
-# Простое хранение истории в памяти (для старта)
 user_histories = {}
 
 @dp.message(Command("start"))
@@ -74,7 +76,6 @@ async def handle_message(message: types.Message):
         reply = await get_ai_response(user_text, history)
         await message.answer(reply)
 
-        # Сохраняем историю (последние 10 сообщений)
         history.append({"role": "user", "content": user_text})
         history.append({"role": "assistant", "content": reply})
         user_histories[user_id] = history[-10:]
