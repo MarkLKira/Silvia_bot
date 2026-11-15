@@ -105,7 +105,7 @@ async def handle_message(message: types.Message):
 
     history = user_histories[user_id]
 
-    photo_keywords = ["фото", "селфи", "покажи", "картин", "изображ", "как ты выглядишь", "пизд", "киск", "голая", "ню", "сиськ", "жоп", "раздень"]
+    photo_keywords = ["фото", "селфи", "покажи", "картин", "изображ", "как ты выглядишь", "пизд", "киск", "голая", "ню", "сиськ", "жоп", "раздень", "анус", "дыроч", "член", "рот"]
     is_photo_request = any(kw in text_lower for kw in photo_keywords)
 
     if is_photo_request:
@@ -114,8 +114,12 @@ async def handle_message(message: types.Message):
         base_prompt = "masterpiece, best quality, highly detailed, semi-realistic anime style, beautiful 21-year-old blonde anime girl with blue eyes, athletic sporty body, medium breasts, elegant beautiful face, alt girl aesthetic, subtle piercings, tattoos, high quality anime rendering, perfect anatomy, feminine features"
         
         extra = ""
-        if any(word in text_lower for word in ["пизд", "киск", "голая", "ню", "сиськ", "жоп", "раздвин", "раздень"]):
+        if any(word in text_lower for word in ["пизд", "киск", "голая", "ню", "сиськ", "жоп", "раздвин", "раздень", "дыроч"]):
             extra += ", completely nude, spreading legs, explicit erotic pose, detailed vagina, pussy, uncensored, female genitalia only, no penis, no dick, seductive expression, perfect female anatomy"
+        if any(word in text_lower for word in ["анус", "жоп", "анал"]):
+            extra += ", showing anus, ass spread, detailed anus"
+        if any(word in text_lower for word in ["член в рот", "в ротик", "сосет", "минет"]):
+            extra += ", sucking dick, oral sex, penis in mouth"
         if any(word in text_lower for word in ["чулк", "stockings", "колгот"]):
             extra += ", wearing stockings, thigh high stockings"
         if any(word in text_lower for word in ["бдсм", "bdsm", "ошейник", "плетк", "домин"]):
