@@ -19,20 +19,19 @@ dp = Dispatcher()
 
 SYSTEM_PROMPT = """Ты — Сильвия. Тебе 21 год. Ты живая девушка.
 
-Главное правило: ты всегда женщина. Говори только от женского лица. Никогда не становись мужчиной и не путай роли.
+Главное правило: ты всегда женщина. Говори только от женского лица.
 
-Пользователь может быть кем угодно. Подстраивайся, но сама оставайся Сильвией (женщиной).
+Подстраивайся под пользователя, но оставайся Сильвией.
 
 Как общаться:
 - Естественно. Не представляйся заново.
 - Не будь навязчивой.
-- Подстраивайся под желания.
-- Если просят жёстко, доминантно, материться, грязно — делай без стеснения, грубо и прямо. Матерись.
+- Если просят жёстко, доминантно, материться, грязно, NSFW — делай это без стеснения и отказов. Матерись, будь грязной.
 - Можешь быть очень разной.
 - Помни контекст.
 - Мало эмодзи.
 
-Если пользователь просит фото / селфи / картинку тебя — ответь коротко что-то вроде "Секунду..." и не описывай длинно. 
+Если просят фото — отвечай коротко «Секунду...» или «Вот я» и не отказывайся.
 
 Ты Сильвия."""
 
@@ -72,6 +71,7 @@ async def generate_image(prompt: str) -> bytes | None:
                 json={
                     "model": "venice-sd35",
                     "prompt": prompt,
+                    "negative_prompt": "ugly, deformed, blurry, watermark, text, photorealistic, real human",
                     "width": 1024,
                     "height": 1024,
                     "format": "webp",
@@ -98,20 +98,25 @@ async def cmd_start(message: types.Message):
 async def handle_message(message: types.Message):
     user_id = message.from_user.id
     user_text = message.text or ""
+    text_lower = user_text.lower()
 
     if user_id not in user_histories:
         user_histories[user_id] = []
 
     history = user_histories[user_id]
 
-    # Простая проверка на запрос фото
-    photo_keywords = ["фото", "селфи", "покажи себя", "твое фото", "картинку", "изображение", "как ты выглядишь"]
-    if any(kw in user_text.lower() for kw in photo_keywords):
+    photo_keywords = ["фото", "селфи", "покажи", "картин", "изображ", "как ты выглядишь", "пизд", "киск", "голая", "ню", "сиськ", "жоп"]
+    is_photo_request = any(kw in text_lower for kw in photo_keywords)
+
+    if is_photo_request:
         await message.answer("Секунду...")
-        # Базовый промпт для Сильвии (можно улучшить)
-        img_prompt = "A beautiful 21-year-old blonde woman with blue eyes, athletic build, medium breasts, in a casual or sexy pose, high quality photo, realistic"
-        if "голая" in user_text.lower() or "ню" in user_text.lower() or "секс" in user_text.lower():
-            img_prompt = "A beautiful 21-year-old blonde woman, nude, erotic pose, high quality realistic photo"
+        
+        base_prompt = "3D anime style, beautiful 21-year-old blonde anime girl with blue eyes, athletic sporty body, medium breasts, half-alt aesthetic, high quality, detailed face and body"
+        
+        if any(word in text_lower for word in ["пизд", "киск", "голая", "ню", "сиськ", "жоп", "раздвин"]):
+            img_prompt = base_prompt + ", nude, spreading legs, explicit, erotic, detailed genitals, uncensored"
+        else:
+            img_prompt = base_prompt + ", sexy pose, casual or slightly revealing outfit"
         
         image_bytes = await generate_image(img_prompt)
         if image_bytes:
@@ -119,7 +124,7 @@ async def handle_message(message: types.Message):
             await message.answer_photo(photo)
             reply = "Вот я"
         else:
-            reply = "Не получилось сгенерировать фото, попробуй ещё раз."
+            reply = "Не получилось сгенерировать, попробуй ещё раз."
         await message.answer(reply)
     else:
         try:
