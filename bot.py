@@ -72,8 +72,7 @@ async def generate_image(prompt: str) -> bytes | None:
                     "model": "qwen-image",
                     "prompt": prompt,
                     "negative_prompt": "ugly, deformed, blurry, watermark, text, bad anatomy, extra limbs, low quality",
-                    "width": 1024,
-                    "height": 1024,
+                    "aspect_ratio": "1:1",
                     "format": "webp",
                     "safe_mode": False
                 },
@@ -106,54 +105,4 @@ async def handle_message(message: types.Message):
     history = user_histories[user_id]
 
     photo_keywords = ["фото", "селфи", "покажи", "картин", "изображ", "как ты выглядишь", "пизд", "киск", "голая", "ню", "сиськ", "жоп", "раздень"]
-    is_photo_request = any(kw in text_lower for kw in photo_keywords)
-
-    if is_photo_request:
-        await message.answer("Секунду...")
-        
-        base_prompt = "masterpiece, best quality, highly detailed, beautiful 21-year-old blonde woman with blue eyes, athletic sporty body, medium breasts, elegant beautiful face, semi-realistic 3D anime style, high quality rendering, perfect anatomy"
-        
-        if any(word in text_lower for word in ["пизд", "киск", "голая", "ню", "сиськ", "жоп", "раздвин", "раздень"]):
-            img_prompt = base_prompt + ", completely nude, spreading legs, explicit erotic pose, detailed genitals, uncensored, seductive expression"
-        else:
-            img_prompt = base_prompt + ", sexy elegant pose, slightly revealing outfit or casual"
-        
-        image_bytes = await generate_image(img_prompt)
-        if image_bytes:
-            photo = types.BufferedInputFile(image_bytes, filename="silvia.webp")
-            await message.answer_photo(photo)
-            reply = "Вот я"
-        else:
-            reply = "Не получилось сгенерировать, попробуй ещё раз."
-        await message.answer(reply)
-    else:
-        try:
-            reply = await get_ai_response(user_text, history)
-            await message.answer(reply)
-            history.append({"role": "user", "content": user_text})
-            history.append({"role": "assistant", "content": reply})
-            user_histories[user_id] = history[-12:]
-        except Exception as e:
-            logger.error(e)
-            await message.answer("Что-то пошло не так.")
-
-async def health_check(request):
-    return web.Response(text="OK")
-
-async def start_web_server():
-    app = web.Application()
-    app.router.add_get("/", health_check)
-    runner = web.AppRunner(app)
-    await runner.setup()
-    port = int(os.getenv("PORT", 10000))
-    site = web.TCPSite(runner, "0.0.0.0", port)
-    await site.start()
-    logger.info(f"Web server started on port {port}")
-
-async def main():
-    logger.info("Starting bot...")
-    await start_web_server()
-    await dp.start_polling(bot)
-
-if __name__ == "__main__":
-    asyncio.run(main())
+    is_photo_request = any(kw in text_lower for kw in 
