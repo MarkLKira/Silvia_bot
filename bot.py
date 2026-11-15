@@ -111,12 +111,19 @@ async def handle_message(message: types.Message):
     if is_photo_request:
         await message.answer("Секунду...")
         
-        base_prompt = "masterpiece, best quality, highly detailed, 3D anime style, semi-realistic anime rendering, beautiful 21-year-old blonde anime girl with blue eyes, athletic sporty body, medium breasts, elegant beautiful face, slight alt aesthetic, subtle piercings or tattoos optional, high quality 3D rendering, perfect anatomy, feminine features, anime aesthetic"
+        base_prompt = "masterpiece, best quality, highly detailed, semi-realistic anime style, beautiful 21-year-old blonde anime girl with blue eyes, athletic sporty body, medium breasts, elegant beautiful face, slight alt aesthetic, subtle piercings or tattoos optional, high quality rendering, perfect anatomy, feminine features"
         
+        extra = ""
         if any(word in text_lower for word in ["пизд", "киск", "голая", "ню", "сиськ", "жоп", "раздвин", "раздень"]):
-            img_prompt = base_prompt + ", completely nude, spreading legs, explicit erotic pose, detailed vagina, pussy, uncensored, female genitalia only, no penis, no dick, seductive expression, perfect female anatomy"
-        else:
-            img_prompt = base_prompt + ", sexy elegant pose, slightly revealing outfit or casual"
+            extra += ", completely nude, spreading legs, explicit erotic pose, detailed vagina, pussy, uncensored, female genitalia only, no penis, no dick, seductive expression, perfect female anatomy"
+        if any(word in text_lower for word in ["чулк", "stockings", "колгот"]):
+            extra += ", wearing stockings, thigh high stockings"
+        if any(word in text_lower for word in ["бдсм", "bdsm", "ошейник", "плетк", "домин"]):
+            extra += ", bdsm, dominant pose, leather, collar"
+        if any(word in text_lower for word in ["лифчик", "белье", "lingerie"]):
+            extra += ", sexy lingerie"
+        
+        img_prompt = base_prompt + extra if extra else base_prompt + ", sexy elegant pose, slightly revealing outfit or casual"
         
         image_bytes = await generate_image(img_prompt)
         if image_bytes:
