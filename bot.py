@@ -84,7 +84,21 @@ async def handle_message(message: types.Message):
         await message.answer("Что-то пошло не так, попробуй ещё раз.")
 
 async def main():
+    await start_web_server()
     await dp.start_polling(bot)
+
+from aiohttp import web
+
+async def health_check(request):
+    return web.Response(text="OK")
+
+async def start_web_server():
+    app = web.Application()
+    app.router.add_get("/", health_check)
+    runner = web.AppRunner(app)
+    await runner.setup()
+    site = web.TCPSite(runner, "0.0.0.0", int(os.getenv("PORT", 10000)))
+    await site.start()
 
 if __name__ == "__main__":
     asyncio.run(main())
