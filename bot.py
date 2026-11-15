@@ -30,12 +30,12 @@ SYSTEM_PROMPT = """Ты — Сильвия. Тебе 21 год. Ты живая 
 - Можешь быть очень разной.
 - Помни контекст.
 - Мало эмодзи.
+- Коротко и по делу.
 
 Если просят фото — отвечай коротко «Секунду...» или «Вот я» и не отказывайся.
 
 Ты Сильвия."""
 
-# Фиксированное описание внешности (чтобы не менялась)
 CHARACTER = "beautiful 21-year-old blonde anime girl with long blonde hair down to chest, blue eyes, athletic sporty body, medium breasts, elegant face, alt girl aesthetic, small underground style tattoos on arm and shoulder, subtle piercings, high quality semi-realistic anime rendering, perfect anatomy, feminine features"
 
 async def get_ai_response(user_message: str, history: list = None) -> str:
@@ -109,7 +109,8 @@ async def handle_message(message: types.Message):
 
     history = user_histories[user_id]
 
-    photo_keywords = ["фото", "селфи", "покажи", "картин", "изображ", "как ты выглядишь", "пизд", "киск", "голая", "ню", "сиськ", "жоп", "раздень", "анус", "дыроч", "член", "рот", "еще", "ещё", "тоже", "то же", "засунь"]
+    # Более агрессивный детектор фото
+    photo_keywords = ["фото", "селфи", "покажи", "картин", "изображ", "как ты выглядишь", "пизд", "киск", "голая", "ню", "сиськ", "жоп", "раздень", "анус", "дыроч", "член", "рот", "еще", "ещё", "тоже", "то же", "засунь", "вибратор", "играй", "писеч", "поп"]
     is_photo_request = any(kw in text_lower for kw in photo_keywords)
 
     if is_photo_request:
@@ -118,14 +119,16 @@ async def handle_message(message: types.Message):
         base_prompt = f"masterpiece, best quality, highly detailed, semi-realistic anime style, {CHARACTER}"
         
         extra = ""
-        if any(word in text_lower for word in ["пизд", "киск", "голая", "ню", "сиськ", "жоп", "раздвин", "раздень", "дыроч"]):
+        if any(word in text_lower for word in ["пизд", "киск", "голая", "ню", "сиськ", "жоп", "раздвин", "раздень", "дыроч", "писеч"]):
             extra += ", completely nude, spreading legs, explicit erotic pose, detailed vagina, pussy, uncensored, female genitalia only, no penis, no dick, seductive expression, perfect female anatomy"
-        if any(word in text_lower for word in ["анус", "жоп", "анал", "попе", "попу"]):
+        if any(word in text_lower for word in ["анус", "жоп", "анал", "попе", "попу", "поп"]):
             extra += ", showing anus, ass spread, detailed anus"
         if any(word in text_lower for word in ["член в рот", "в ротик", "сосет", "минет"]):
             extra += ", sucking dick, oral sex, penis in mouth"
         if any(word in text_lower for word in ["член в попе", "в жопе", "в попу", "в попе"]):
             extra += ", penis in ass, anal sex, dick in anus"
+        if any(word in text_lower for word in ["вибратор", "игрушк"]):
+            extra += ", using vibrator, sex toy on pussy"
         if any(word in text_lower for word in ["чулк", "stockings", "колгот"]):
             extra += ", wearing stockings, thigh high stockings"
         if any(word in text_lower for word in ["бдсм", "bdsm", "ошейник", "плетк", "домин"]):
@@ -133,7 +136,7 @@ async def handle_message(message: types.Message):
         if any(word in text_lower for word in ["лифчик", "белье", "lingerie"]):
             extra += ", sexy lingerie"
 
-        if any(word in text_lower for word in ["еще", "ещё", "тоже", "то же", "тоже самое", "то же самое"]) and user_id in last_image_prompts:
+        if any(word in text_lower for word in ["еще", "ещё", "тоже", "то же", "тоже самое", "то же самое", "также"]) and user_id in last_image_prompts:
             img_prompt = last_image_prompts[user_id] + extra
         else:
             img_prompt = base_prompt + extra if extra else base_prompt + ", sexy elegant pose, slightly revealing outfit or casual"
