@@ -44,7 +44,7 @@ async def get_ai_response(user_message: str, history: list = None) -> str:
                 "Content-Type": "application/json",
             },
             json={
-                "model": "openai/gpt-oss-20b",
+                "model": "openai/gpt-oss-120b",
                 "messages": messages,
                 "temperature": 0.8,
             }
