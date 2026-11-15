@@ -6,10 +6,16 @@ from aiogram.filters import Command
 import aiohttp
 from aiohttp import web
 
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
 TOKEN = os.getenv("TOKEN")
 VENICE_API_KEY = os.getenv("VENICE_API_KEY")
 
-logging.basicConfig(level=logging.INFO)
+if not TOKEN:
+    logger.error("TOKEN не найден!")
+if not VENICE_API_KEY:
+    logger.error("VENICE_API_KEY не найден!")
 
 bot = Bot(token=TOKEN)
 dp = Dispatcher()
@@ -28,6 +34,9 @@ SYSTEM_PROMPT = """Ты — Сильвия, 21 год. Живая девушка
 Ты Сильвия, от первого лица."""
 
 async def get_ai_response(user_message: str, history: list = None) -> str:
+    if not VENICE_API_KEY:
+        return "Ключ Venice не настроен."
+    
     if history is None:
         history = []
     
@@ -35,24 +44,30 @@ async def get_ai_response(user_message: str, history: list = None) -> str:
     messages.extend(history)
     messages.append({"role": "user", "content": user_message})
 
-    async with aiohttp.ClientSession() as session:
-        async with session.post(
-            "https://api.venice.ai/api/v1/chat/completions",
-            headers={
-                "Authorization": f"Bearer {VENICE_API_KEY}",
-                "Content-Type": "application/json",
-            },
-            json={
-                "model": "venice-uncensored",
-                "messages": messages,
-                "temperature": 0.85,
-            }
-        ) as resp:
-            data = await resp.json()
-            if "choices" not in data:
-                logging.error(f"Venice error: {data}")
-                return "Ошибка API, попробуй позже."
-            return data["choices"][0]["message"]["content"]
+    try:
+        async with aiohttp.ClientSession() as session:
+            async with session.post(
+                "https://api.venice.ai/api/v1/chat/completions",
+                headers={
+                    "Authorization": f"Bearer {VENICE_API_KEY}",
+                    "Content-Type": "application/json",
+                },
+                json={
+                    "model": "venice-uncensored",
+                    "messages": messages,
+                    "temperature": 0.85,
+                },
+                timeout=aiohttp.ClientTimeout(total=60)
+            ) as resp:
+                data = await resp.json()
+                logger.info(f"Venice response status: {resp.status}")
+                if "choices" not in data:
+                    logger.error(f"Venice error: {data}")
+                    return "Ошибка API, попробуй позже."
+                return data["choices"][0]["message"]["content"]
+    except Exception as e:
+        logger.error(f"Request error: {e}")
+        return "Ошибка соединения."
 
 user_histories = {}
 
@@ -78,7 +93,7 @@ async def handle_message(message: types.Message):
         history.append({"role": "assistant", "content": reply})
         user_histories[user_id] = history[-12:]
     except Exception as e:
-        logging.error(e)
+        logger.error(e)
         await message.answer("Что-то пошло не так, попробуй ещё раз.")
 
 async def health_check(request):
@@ -87,3 +102,18 @@ async def health_check(request):
 async def start_web_server():
     app = web.Application()
     app.router.add_get("/", health_check)
+    runner = web.AppRunner(app)
+    await runner.setup()
+    port = int(os.getenv("PORT", 10000))
+    site = web.TCPSite(runner, "0.0.0.0", port)
+    await site.start()
+    logger.info(f"Web server started on port {port}")
+
+async def main():
+    logger.info("Starting bot...")
+    await start_web_server()
+    logger.info("Starting polling...")
+    await dp.start_polling(bot)
+
+if __name__ == "__main__":
+    asyncio.run(main())
