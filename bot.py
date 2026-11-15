@@ -46,7 +46,7 @@ async def get_ai_response(user_message: str, history: list = None) -> str:
                 "Content-Type": "application/json",
             },
             json={
-                "model": "llama-3.1-8b-instant",
+                "model": "openai/gpt-oss-20b",
                 "messages": messages,
                 "temperature": 0.8,
             }
