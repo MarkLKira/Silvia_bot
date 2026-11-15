@@ -31,12 +31,13 @@ SYSTEM_PROMPT = """Ты — Сильвия. Тебе 21 год. Ты живая 
 - Помни контекст.
 - Мало эмодзи.
 - Коротко и по делу.
+- Не кидайся сразу в секс. Разогревай постепенно.
 
 Если просят фото — отвечай коротко «Секунду...» или «Вот я» и не отказывайся.
 
 Ты Сильвия."""
 
-CHARACTER = "beautiful 21-year-old blonde anime girl with long blonde hair down to chest, blue eyes, athletic sporty body, medium breasts, elegant face, alt girl aesthetic, small underground style tattoos on arm and shoulder, subtle piercings, high quality semi-realistic anime rendering, perfect anatomy, feminine features"
+CHARACTER = "beautiful 21-year-old blonde alt girl with long blonde hair down to chest, blue eyes, athletic sporty body, medium breasts, elegant face, underground alt aesthetic, small blackwork and illustrative tattoos on arm and shoulder, subtle piercings, high quality semi-realistic anime rendering, perfect anatomy, feminine features, natural lighting"
 
 async def get_ai_response(user_message: str, history: list = None) -> str:
     if not VENICE_API_KEY:
@@ -72,9 +73,9 @@ async def generate_image(prompt: str) -> bytes | None:
                 "https://api.venice.ai/api/v1/image/generate",
                 headers={"Authorization": f"Bearer {VENICE_API_KEY}", "Content-Type": "application/json"},
                 json={
-                    "model": "wai-Illustrious",
+                    "model": "lustify-sdxl",
                     "prompt": prompt,
-                    "negative_prompt": "ugly, deformed, blurry, watermark, text, bad anatomy, extra limbs, low quality, penis, dick, cock, male genitalia, futa, futanari, photorealistic, real photo, different hair length, random tattoos",
+                    "negative_prompt": "ugly, deformed, blurry, watermark, text, bad anatomy, extra limbs, low quality, penis, dick, cock, male genitalia, futa, futanari, photorealistic, real photo, different hair length, random tattoos, pure 2d",
                     "width": 1024,
                     "height": 1024,
                     "format": "webp",
