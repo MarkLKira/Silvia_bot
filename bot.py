@@ -4,6 +4,7 @@ import os
 from aiogram import Bot, Dispatcher, types
 from aiogram.filters import Command
 import aiohttp
+from aiohttp import web
 
 TOKEN = os.getenv("TOKEN")
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
@@ -45,7 +46,7 @@ async def get_ai_response(user_message: str, history: list = None) -> str:
                 "Content-Type": "application/json",
             },
             json={
-                "model": "llama-3.1-70b-versatile",,
+                "model": "llama-3.1-8b-instant",
                 "messages": messages,
                 "temperature": 0.8,
             }
@@ -83,12 +84,6 @@ async def handle_message(message: types.Message):
         logging.error(e)
         await message.answer("Что-то пошло не так, попробуй ещё раз.")
 
-async def main():
-    await start_web_server()
-    await dp.start_polling(bot)
-
-from aiohttp import web
-
 async def health_check(request):
     return web.Response(text="OK")
 
@@ -99,6 +94,10 @@ async def start_web_server():
     await runner.setup()
     site = web.TCPSite(runner, "0.0.0.0", int(os.getenv("PORT", 10000)))
     await site.start()
+
+async def main():
+    await start_web_server()
+    await dp.start_polling(bot)
 
 if __name__ == "__main__":
     asyncio.run(main())
