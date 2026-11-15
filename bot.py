@@ -35,6 +35,9 @@ SYSTEM_PROMPT = """Ты — Сильвия. Тебе 21 год. Ты живая 
 
 Ты Сильвия."""
 
+# Фиксированное описание внешности (чтобы не менялась)
+CHARACTER = "beautiful 21-year-old blonde anime girl with long blonde hair down to chest, blue eyes, athletic sporty body, medium breasts, elegant face, alt girl aesthetic, small underground style tattoos on arm and shoulder, subtle piercings, high quality semi-realistic anime rendering, perfect anatomy, feminine features"
+
 async def get_ai_response(user_message: str, history: list = None) -> str:
     if not VENICE_API_KEY:
         return "Ключ Venice не настроен."
@@ -71,7 +74,7 @@ async def generate_image(prompt: str) -> bytes | None:
                 json={
                     "model": "wai-Illustrious",
                     "prompt": prompt,
-                    "negative_prompt": "ugly, deformed, blurry, watermark, text, bad anatomy, extra limbs, low quality, penis, dick, cock, male genitalia, futa, futanari, photorealistic, real photo",
+                    "negative_prompt": "ugly, deformed, blurry, watermark, text, bad anatomy, extra limbs, low quality, penis, dick, cock, male genitalia, futa, futanari, photorealistic, real photo, different hair length, random tattoos",
                     "width": 1024,
                     "height": 1024,
                     "format": "webp",
@@ -89,7 +92,7 @@ async def generate_image(prompt: str) -> bytes | None:
         return None
 
 user_histories = {}
-last_image_prompts = {}  # запоминаем последний промпт для фото
+last_image_prompts = {}
 
 @dp.message(Command("start"))
 async def cmd_start(message: types.Message):
@@ -106,21 +109,23 @@ async def handle_message(message: types.Message):
 
     history = user_histories[user_id]
 
-    photo_keywords = ["фото", "селфи", "покажи", "картин", "изображ", "как ты выглядишь", "пизд", "киск", "голая", "ню", "сиськ", "жоп", "раздень", "анус", "дыроч", "член", "рот", "еще", "ещё", "тоже", "то же"]
+    photo_keywords = ["фото", "селфи", "покажи", "картин", "изображ", "как ты выглядишь", "пизд", "киск", "голая", "ню", "сиськ", "жоп", "раздень", "анус", "дыроч", "член", "рот", "еще", "ещё", "тоже", "то же", "засунь"]
     is_photo_request = any(kw in text_lower for kw in photo_keywords)
 
     if is_photo_request:
         await message.answer("Секунду...")
         
-        base_prompt = "masterpiece, best quality, highly detailed, semi-realistic anime style, beautiful 21-year-old blonde anime girl with blue eyes, athletic sporty body, medium breasts, elegant beautiful face, alt girl aesthetic, subtle piercings, tattoos, high quality anime rendering, perfect anatomy, feminine features"
+        base_prompt = f"masterpiece, best quality, highly detailed, semi-realistic anime style, {CHARACTER}"
         
         extra = ""
         if any(word in text_lower for word in ["пизд", "киск", "голая", "ню", "сиськ", "жоп", "раздвин", "раздень", "дыроч"]):
             extra += ", completely nude, spreading legs, explicit erotic pose, detailed vagina, pussy, uncensored, female genitalia only, no penis, no dick, seductive expression, perfect female anatomy"
-        if any(word in text_lower for word in ["анус", "жоп", "анал", "попе"]):
+        if any(word in text_lower for word in ["анус", "жоп", "анал", "попе", "попу"]):
             extra += ", showing anus, ass spread, detailed anus"
-        if any(word in text_lower for word in ["член в рот", "в ротик", "сосет", "минет", "член в попе", "в жопе"]):
-            extra += ", sucking dick or penis in ass, explicit"
+        if any(word in text_lower for word in ["член в рот", "в ротик", "сосет", "минет"]):
+            extra += ", sucking dick, oral sex, penis in mouth"
+        if any(word in text_lower for word in ["член в попе", "в жопе", "в попу", "в попе"]):
+            extra += ", penis in ass, anal sex, dick in anus"
         if any(word in text_lower for word in ["чулк", "stockings", "колгот"]):
             extra += ", wearing stockings, thigh high stockings"
         if any(word in text_lower for word in ["бдсм", "bdsm", "ошейник", "плетк", "домин"]):
@@ -128,13 +133,12 @@ async def handle_message(message: types.Message):
         if any(word in text_lower for word in ["лифчик", "белье", "lingerie"]):
             extra += ", sexy lingerie"
 
-        # Если просит "ещё" или "то же самое" — берём предыдущий промпт и дополняем
         if any(word in text_lower for word in ["еще", "ещё", "тоже", "то же", "тоже самое", "то же самое"]) and user_id in last_image_prompts:
             img_prompt = last_image_prompts[user_id] + extra
         else:
             img_prompt = base_prompt + extra if extra else base_prompt + ", sexy elegant pose, slightly revealing outfit or casual"
         
-        last_image_prompts[user_id] = img_prompt  # сохраняем
+        last_image_prompts[user_id] = img_prompt
         
         image_bytes = await generate_image(img_prompt)
         if image_bytes:
