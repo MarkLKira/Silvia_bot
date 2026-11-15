@@ -69,9 +69,9 @@ async def generate_image(prompt: str) -> bytes | None:
                 "https://api.venice.ai/api/v1/image/generate",
                 headers={"Authorization": f"Bearer {VENICE_API_KEY}", "Content-Type": "application/json"},
                 json={
-                    "model": "venice-sd35",
+                    "model": "qwen-image",
                     "prompt": prompt,
-                    "negative_prompt": "ugly, deformed, blurry, watermark, text, photorealistic, real human",
+                    "negative_prompt": "ugly, deformed, blurry, watermark, text, bad anatomy, extra limbs, low quality",
                     "width": 1024,
                     "height": 1024,
                     "format": "webp",
@@ -105,18 +105,18 @@ async def handle_message(message: types.Message):
 
     history = user_histories[user_id]
 
-    photo_keywords = ["фото", "селфи", "покажи", "картин", "изображ", "как ты выглядишь", "пизд", "киск", "голая", "ню", "сиськ", "жоп"]
+    photo_keywords = ["фото", "селфи", "покажи", "картин", "изображ", "как ты выглядишь", "пизд", "киск", "голая", "ню", "сиськ", "жоп", "раздень"]
     is_photo_request = any(kw in text_lower for kw in photo_keywords)
 
     if is_photo_request:
         await message.answer("Секунду...")
         
-        base_prompt = "3D anime style, beautiful 21-year-old blonde anime girl with blue eyes, athletic sporty body, medium breasts, half-alt aesthetic, high quality, detailed face and body"
+        base_prompt = "masterpiece, best quality, highly detailed, beautiful 21-year-old blonde woman with blue eyes, athletic sporty body, medium breasts, elegant beautiful face, semi-realistic 3D anime style, high quality rendering, perfect anatomy"
         
-        if any(word in text_lower for word in ["пизд", "киск", "голая", "ню", "сиськ", "жоп", "раздвин"]):
-            img_prompt = base_prompt + ", nude, spreading legs, explicit, erotic, detailed genitals, uncensored"
+        if any(word in text_lower for word in ["пизд", "киск", "голая", "ню", "сиськ", "жоп", "раздвин", "раздень"]):
+            img_prompt = base_prompt + ", completely nude, spreading legs, explicit erotic pose, detailed genitals, uncensored, seductive expression"
         else:
-            img_prompt = base_prompt + ", sexy pose, casual or slightly revealing outfit"
+            img_prompt = base_prompt + ", sexy elegant pose, slightly revealing outfit or casual"
         
         image_bytes = await generate_image(img_prompt)
         if image_bytes:
