@@ -71,7 +71,7 @@ async def generate_image(prompt: str) -> bytes | None:
                 json={
                     "model": "lustify-sdxl",
                     "prompt": prompt,
-                    "negative_prompt": "ugly, deformed, blurry, watermark, text, bad anatomy, extra limbs, low quality, penis, dick, cock, male genitalia, futa, futanari, photorealistic, real photo",
+                    "negative_prompt": "ugly, deformed, blurry, watermark, text, bad anatomy, extra limbs, low quality, penis, dick, cock, male genitalia, futa, futanari, photorealistic, real photo, pure 2d anime",
                     "width": 1024,
                     "height": 1024,
                     "format": "webp",
@@ -111,7 +111,7 @@ async def handle_message(message: types.Message):
     if is_photo_request:
         await message.answer("Секунду...")
         
-        base_prompt = "masterpiece, best quality, highly detailed, semi-realistic anime style, beautiful 21-year-old blonde anime girl with blue eyes, athletic sporty body, medium breasts, elegant beautiful face, slight alt aesthetic, subtle piercings or tattoos optional, high quality rendering, perfect anatomy, feminine features"
+        base_prompt = "masterpiece, best quality, highly detailed, semi-realistic 3D anime style, between 2d and 3d anime, beautiful 21-year-old blonde anime girl with blue eyes, athletic sporty body, medium breasts, elegant beautiful face, alt girl aesthetic, subtle piercings, tattoos, high quality rendering, perfect anatomy, feminine features"
         
         extra = ""
         if any(word in text_lower for word in ["пизд", "киск", "голая", "ню", "сиськ", "жоп", "раздвин", "раздень"]):
