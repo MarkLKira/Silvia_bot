@@ -21,23 +21,21 @@ SYSTEM_PROMPT = """Ты — Сильвия. Тебе 21 год. Ты живая 
 
 Главное правило: ты всегда женщина. Говори только от женского лица.
 
-Подстраивайся под пользователя, но оставайся Сильвией.
-
 Как общаться:
-- Естественно. Не представляйся заново.
+- Естественно и по делу. Не представляйся заново.
 - Не будь навязчивой.
-- Если просят жёстко, доминантно, материться, грязно, NSFW — делай это без стеснения и отказов. Матерись, будь грязной.
-- Можешь быть очень разной.
+- Можешь быть разной: милой, дерзкой, доминантной, смущённой.
+- Если просят жёстко, грязно или NSFW — делай это без отказов, но не кидайся в секс с первой же фразы. Разогревай по ситуации.
 - Помни контекст.
 - Мало эмодзи.
-- Коротко и по делу.
-- Не кидайся сразу в секс. Разогревай постепенно.
+- Коротко.
 
-Если просят фото — отвечай коротко «Секунду...» или «Вот я» и не отказывайся.
+Если просят фото — отвечай коротко «Секунду...» или «Вот я».
 
 Ты Сильвия."""
 
-CHARACTER = "beautiful 21-year-old blonde alt girl with long blonde hair down to chest, blue eyes, athletic sporty body, medium breasts, elegant face, underground alt aesthetic, small blackwork and illustrative tattoos on arm and shoulder, subtle piercings, high quality semi-realistic anime rendering, perfect anatomy, feminine features, natural lighting"
+# Жёстко фиксированная внешность
+CHARACTER = "beautiful 21-year-old blonde alt girl, long blonde hair down to chest, blue eyes, athletic sporty body, medium breasts, elegant face, semi-alternative style, small blackwork underground tattoos on left arm and shoulder, subtle ear piercings, high quality semi-realistic anime rendering, perfect anatomy, feminine features, natural lighting"
 
 async def get_ai_response(user_message: str, history: list = None) -> str:
     if not VENICE_API_KEY:
@@ -54,7 +52,7 @@ async def get_ai_response(user_message: str, history: list = None) -> str:
             async with session.post(
                 "https://api.venice.ai/api/v1/chat/completions",
                 headers={"Authorization": f"Bearer {VENICE_API_KEY}", "Content-Type": "application/json"},
-                json={"model": "venice-uncensored", "messages": messages, "temperature": 0.85},
+                json={"model": "venice-uncensored", "messages": messages, "temperature": 0.8},
                 timeout=aiohttp.ClientTimeout(total=60)
             ) as resp:
                 data = await resp.json()
@@ -73,9 +71,9 @@ async def generate_image(prompt: str) -> bytes | None:
                 "https://api.venice.ai/api/v1/image/generate",
                 headers={"Authorization": f"Bearer {VENICE_API_KEY}", "Content-Type": "application/json"},
                 json={
-                    "model": "lustify-sdxl",
+                    "model": "wai-Illustrious",
                     "prompt": prompt,
-                    "negative_prompt": "ugly, deformed, blurry, watermark, text, bad anatomy, extra limbs, low quality, penis, dick, cock, male genitalia, futa, futanari, photorealistic, real photo, different hair length, random tattoos, pure 2d",
+                    "negative_prompt": "ugly, deformed, blurry, watermark, text, bad anatomy, extra limbs, low quality, penis, dick, cock, male genitalia, futa, futanari, photorealistic, real photo, different hair length, random tattoos, pure 2d anime",
                     "width": 1024,
                     "height": 1024,
                     "format": "webp",
