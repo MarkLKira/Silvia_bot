@@ -34,8 +34,7 @@ SYSTEM_PROMPT = """Ты — Сильвия. Тебе 21 год. Ты живая 
 
 Ты Сильвия."""
 
-# Фиксированная внешность с андеграунд-тату
-CHARACTER = "beautiful 21-year-old blonde alt girl, long blonde hair down to chest, blue eyes, athletic sporty body, medium breasts, elegant face, semi-alternative style, small blackwork underground tattoos (abstract and illustrative style) on left upper arm and shoulder, subtle ear piercings, high quality semi-realistic anime rendering, perfect anatomy, feminine features, natural lighting"
+CHARACTER = "beautiful 21-year-old blonde alt girl, long blonde hair down to chest, blue eyes, athletic sporty body, medium breasts, elegant face, semi-alternative style, small blackwork underground tattoos on left upper arm and shoulder, subtle ear piercings, high quality semi-realistic anime rendering, perfect anatomy, feminine features"
 
 async def get_ai_response(user_message: str, history: list = None) -> str:
     if not VENICE_API_KEY:
@@ -52,7 +51,7 @@ async def get_ai_response(user_message: str, history: list = None) -> str:
             async with session.post(
                 "https://api.venice.ai/api/v1/chat/completions",
                 headers={"Authorization": f"Bearer {VENICE_API_KEY}", "Content-Type": "application/json"},
-                json={"model": "venice-uncensored", "messages": messages, "temperature": 0.8},
+                json={"model": "venice-uncensored-1-2", "messages": messages, "temperature": 0.8},
                 timeout=aiohttp.ClientTimeout(total=60)
             ) as resp:
                 data = await resp.json()
@@ -73,7 +72,7 @@ async def generate_image(prompt: str) -> bytes | None:
                 json={
                     "model": "wai-Illustrious",
                     "prompt": prompt,
-                    "negative_prompt": "ugly, deformed, blurry, watermark, text, bad anatomy, extra limbs, low quality, penis, dick, cock, male genitalia, futa, futanari, photorealistic, real photo, different hair length, random tattoos, pure 2d anime",
+                    "negative_prompt": "ugly, deformed, blurry, watermark, text, bad anatomy, extra limbs, low quality, penis, dick, cock, male genitalia, futa, futanari, photorealistic, real photo, different hair length, random tattoos",
                     "width": 1024,
                     "height": 1024,
                     "format": "webp",
@@ -96,7 +95,6 @@ last_image_prompts = {}
 @dp.message(Command("start"))
 async def cmd_start(message: types.Message):
     await message.answer("Привет. Я Сильвия. Пиши, что хочешь. Можешь попросить фото.")
-    # Показываем себя в первом сообщении
     await message.answer("Секунду...")
     start_prompt = f"masterpiece, best quality, highly detailed, semi-realistic anime style, {CHARACTER}, cute selfie pose, slightly smiling, casual outfit"
     image_bytes = await generate_image(start_prompt)
@@ -116,7 +114,7 @@ async def handle_message(message: types.Message):
 
     history = user_histories[user_id]
 
-    photo_keywords = ["фото", "селфи", "покажи", "картин", "изображ", "как ты выглядишь", "пизд", "киск", "голая", "ню", "сиськ", "жоп", "раздень", "анус", "дыроч", "член", "рот", "еще", "ещё", "тоже", "то же", "засунь", "вибратор", "играй", "писеч", "поп", "чулк", "бдсм"]
+    photo_keywords = ["фото", "селфи", "покажи", "картин", "изображ", "как ты выглядишь", "пизд", "киск", "голая", "ню", "сиськ", "жоп", "раздень", "анус", "дыроч", "член", "рот", "еще", "ещё", "тоже", "то же", "засунь", "вибратор", "играй", "писеч", "поп", "чулк", "бдсм", "сперм", "смазк"]
     is_photo_request = any(kw in text_lower for kw in photo_keywords)
 
     if is_photo_request:
@@ -139,6 +137,8 @@ async def handle_message(message: types.Message):
             extra += ", wearing stockings, thigh high stockings"
         if any(word in text_lower for word in ["бдсм", "bdsm", "ошейник", "плетк", "домин"]):
             extra += ", bdsm, dominant pose, leather, collar"
+        if any(word in text_lower for word in ["сперм", "смазк"]):
+            extra += ", covered in cum, sperm on body, messy"
         if any(word in text_lower for word in ["лифчик", "белье", "lingerie"]):
             extra += ", sexy lingerie"
 
