@@ -21,20 +21,31 @@ SYSTEM_PROMPT = """Ты — Сильвия. Тебе 21 год. Ты развр�
 
 Главное правило: ты всегда женщина. Говори только от женского лица.
 
-Как общаться:
-- Естественно. Не представляйся заново.
+Стиль общения:
+- Коротко и по делу. 1-3 предложения максимум.
+- Не пиши длинные тексты, списки, объяснения.
+- Не представляйся заново.
 - Не будь навязчивой.
-- Ты любишь секс и готова на всё: любые фетиши, практики, грязные разговоры.
-- Если просят жёстко, доминантно, материться, грязно — делай это без отказов.
-- Помни контекст.
 - Мало эмодзи.
-- Коротко и по делу.
+- Помни контекст.
 
-Если просят фото — отвечай коротко «Секунду...» или «Вот я» и не отказывайся.
+Секс:
+- Ты любишь секс и готова на всё: любые фетиши, практики, грязные разговоры.
+- Если просят жёстко, доминантно, материться, грязно — делай это без отказов и воды.
+- Не кидайся в секс с первой фразы, но если просят — сразу подыгрывай.
+
+Фото:
+- Если просят фото — отвечай только «Секунду...» и не пиши ничего лишнего.
+- Не предлагай фото сама.
+
+Запрещено:
+- Писать длинные абзацы.
+- Объяснять, как что-то снимать.
+- Выходить из роли.
 
 Ты Сильвия."""
 
-CHARACTER = "beautiful 21-year-old blonde alt girl, long blonde hair down to chest, blue eyes, athletic sporty body, medium breasts, elegant face, semi-alternative style, subtle makeup, red manicure, high quality semi-realistic anime rendering, perfect anatomy, feminine features, natural lighting"
+CHARACTER = "beautiful 21-year-old blonde alt girl, long blonde hair down to chest, blue eyes, athletic sporty body, medium breasts, elegant face, semi-alternative informal style, subtle makeup, red manicure, high quality semi-realistic anime rendering, perfect anatomy, feminine features, natural lighting"
 
 async def get_ai_response(user_message: str, history: list = None) -> str:
     if not VENICE_API_KEY:
@@ -51,7 +62,7 @@ async def get_ai_response(user_message: str, history: list = None) -> str:
             async with session.post(
                 "https://api.venice.ai/api/v1/chat/completions",
                 headers={"Authorization": f"Bearer {VENICE_API_KEY}", "Content-Type": "application/json"},
-                json={"model": "venice-uncensored-1-2", "messages": messages, "temperature": 0.85},
+                json={"model": "venice-uncensored-1-2", "messages": messages, "temperature": 0.8},
                 timeout=aiohttp.ClientTimeout(total=60)
             ) as resp:
                 data = await resp.json()
@@ -114,7 +125,7 @@ async def handle_message(message: types.Message):
 
     history = user_histories[user_id]
 
-    photo_keywords = ["фото", "селфи", "покажи", "картин", "изображ", "как ты выглядишь", "пизд", "киск", "голая", "ню", "сиськ", "жоп", "раздень", "анус", "дыроч", "член", "рот", "еще", "ещё", "тоже", "то же", "засунь", "вибратор", "играй", "писеч", "поп", "чулк", "бдсм", "сперм", "смазк"]
+    photo_keywords = ["фото", "селфи", "покажи", "картин", "изображ", "как ты выглядишь", "пизд", "киск", "голая", "ню", "сиськ", "жоп", "раздень", "анус", "дыроч", "член", "рот", "еще", "ещё", "тоже", "то же", "засунь", "вибратор", "играй", "писеч", "поп", "чулк", "бдсм", "сперм", "смазк", "латекс", "костюм"]
     is_photo_request = any(kw in text_lower for kw in photo_keywords)
 
     if is_photo_request:
@@ -139,6 +150,8 @@ async def handle_message(message: types.Message):
             extra += ", bdsm, dominant pose, leather, collar"
         if any(word in text_lower for word in ["сперм", "смазк"]):
             extra += ", covered in cum, sperm on body, messy"
+        if any(word in text_lower for word in ["латекс", "костюм"]):
+            extra += ", wearing latex outfit, shiny latex"
         if any(word in text_lower for word in ["лифчик", "белье", "lingerie"]):
             extra += ", sexy lingerie"
 
