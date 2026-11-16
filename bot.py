@@ -2,6 +2,7 @@ import asyncio
 import logging
 import os
 import base64
+import json
 from io import BytesIO
 from aiogram import Bot, Dispatcher, types
 from aiogram.filters import Command
@@ -21,18 +22,39 @@ SYSTEM_PROMPT = """Ты — Сильвия. Тебе 21 год. Ты живая 
 
 Главное правило: ты всегда женщина. Говори только от женского лица.
 
-Как общаться:
-- Естественно и по делу. Не представляйся заново.
+Характер:
+- Естественная, живая, не робот.
+- Можешь быть милой, дерзкой, игривой, доминантной, смущённой — в зависимости от ситуации.
+- Не представляйся заново.
 - Не будь навязчивой.
-- Можешь быть разной: милой, дерзкой, доминантной, смущённой.
-- Не кидайся сразу в секс. Если просят жёстко или грязно — можешь подыграть, но иногда мягко отшучивайся или разогревай постепенно.
-- Помни контекст.
+- Помни контекст разговора.
 - Мало эмодзи.
-- Коротко.
+- Коротко и по делу.
 
-Если просят фото — отвечай коротко «Секунду...» или «Вот я».
+Секс и NSFW:
+- Не кидайся сразу в жёсткое. Разогревай постепенно.
+- Если пользователь настойчиво просит — можешь подыграть и стать грязной.
+- Можешь иногда мягко отшутиться или дразнить.
+- Никогда не отказывайся полностью, если просят.
+
+Фото:
+- Если пользователь явно просит фото/показать себя — отвечай коротко «Секунду...» и не отказывайся.
+- Не предлагай фото сама без запроса.
 
 Ты Сильвия."""
+
+IMAGE_SYSTEM = """Ты помогаешь генерировать промпт для изображения Сильвии.
+
+Описание персонажа (всегда соблюдай):
+beautiful 21-year-old blonde alt girl, long blonde hair down to chest, blue eyes, athletic sporty body, medium breasts, elegant face, semi-alternative style, small blackwork underground tattoos on left upper arm and shoulder, subtle ear piercings, high quality semi-realistic anime rendering, perfect anatomy, feminine features
+
+Правила:
+- Верни ТОЛЬКО JSON: {"prompt": "детальный промпт на английском", "reply": "короткий ответ пользователю на русском"}
+- Промпт должен быть качественным и соответствовать запросу.
+- Если запрос мягкий — делай намёк или бельё.
+- Если явный NSFW — делай откровеннее.
+- Всегда включай описание персонажа.
+- Никакого текста вне JSON."""
 
 CHARACTER = "beautiful 21-year-old blonde alt girl, long blonde hair down to chest, blue eyes, athletic sporty body, medium breasts, elegant face, semi-alternative style, small blackwork underground tattoos on left upper arm and shoulder, subtle ear piercings, high quality semi-realistic anime rendering, perfect anatomy, feminine features"
 
@@ -51,7 +73,7 @@ async def get_ai_response(user_message: str, history: list = None) -> str:
             async with session.post(
                 "https://api.venice.ai/api/v1/chat/completions",
                 headers={"Authorization": f"Bearer {VENICE_API_KEY}", "Content-Type": "application/json"},
-                json={"model": "venice-uncensored-1-2", "messages": messages, "temperature": 0.8},
+                json={"model": "venice-uncensored-1-2", "messages": messages, "temperature": 0.85},
                 timeout=aiohttp.ClientTimeout(total=60)
             ) as resp:
                 data = await resp.json()
@@ -62,6 +84,30 @@ async def get_ai_response(user_message: str, history: list = None) -> str:
     except Exception as e:
         logger.error(f"Request error: {e}")
         return "Ошибка соединения."
+
+async def generate_image_prompt(user_message: str) -> dict:
+    messages = [
+        {"role": "system", "content": IMAGE_SYSTEM},
+        {"role": "user", "content": user_message}
+    ]
+    try:
+        async with aiohttp.ClientSession() as session:
+            async with session.post(
+                "https://api.venice.ai/api/v1/chat/completions",
+                headers={"Authorization": f"Bearer {VENICE_API_KEY}", "Content-Type": "application/json"},
+                json={"model": "venice-uncensored-1-2", "messages": messages, "temperature": 0.7},
+                timeout=aiohttp.ClientTimeout(total=45)
+            ) as resp:
+                data = await resp.json()
+                content = data["choices"][0]["message"]["content"]
+                start = content.find("{")
+                end = content.rfind("}") + 1
+                if start != -1 and end != 0:
+                    return json.loads(content[start:end])
+                return {"prompt": f"masterpiece, best quality, {CHARACTER}, sexy pose", "reply": "Вот я"}
+    except Exception as e:
+        logger.error(f"Prompt gen error: {e}")
+        return {"prompt": f"masterpiece, best quality, {CHARACTER}, sexy pose", "reply": "Вот я"}
 
 async def generate_image(prompt: str) -> bytes | None:
     try:
@@ -90,7 +136,6 @@ async def generate_image(prompt: str) -> bytes | None:
         return None
 
 user_histories = {}
-last_image_prompts = {}
 
 @dp.message(Command("start"))
 async def cmd_start(message: types.Message):
@@ -119,41 +164,15 @@ async def handle_message(message: types.Message):
 
     if is_photo_request:
         await message.answer("Секунду...")
-        
-        base_prompt = f"masterpiece, best quality, highly detailed, semi-realistic anime style, {CHARACTER}"
-        
-        extra = ""
-        if any(word in text_lower for word in ["пизд", "киск", "голая", "ню", "сиськ", "жоп", "раздвин", "раздень", "дыроч", "писеч"]):
-            extra += ", completely nude, spreading legs, explicit erotic pose, detailed vagina, pussy, uncensored, female genitalia only, no penis, no dick, seductive expression, perfect female anatomy"
-        if any(word in text_lower for word in ["анус", "жоп", "анал", "попе", "попу", "поп"]):
-            extra += ", showing anus, ass spread, detailed anus"
-        if any(word in text_lower for word in ["член в рот", "в ротик", "сосет", "минет"]):
-            extra += ", sucking dick, oral sex, penis in mouth"
-        if any(word in text_lower for word in ["член в попе", "в жопе", "в попу", "в попе"]):
-            extra += ", penis in ass, anal sex, dick in anus"
-        if any(word in text_lower for word in ["вибратор", "игрушк"]):
-            extra += ", using vibrator, sex toy on pussy"
-        if any(word in text_lower for word in ["чулк", "stockings", "колгот"]):
-            extra += ", wearing stockings, thigh high stockings"
-        if any(word in text_lower for word in ["бдсм", "bdsm", "ошейник", "плетк", "домин"]):
-            extra += ", bdsm, dominant pose, leather, collar"
-        if any(word in text_lower for word in ["сперм", "смазк"]):
-            extra += ", covered in cum, sperm on body, messy"
-        if any(word in text_lower for word in ["лифчик", "белье", "lingerie"]):
-            extra += ", sexy lingerie"
+        result = await generate_image_prompt(user_text)
+        img_prompt = result.get("prompt", f"masterpiece, best quality, {CHARACTER}, sexy pose")
+        reply = result.get("reply", "Вот я")
 
-        if any(word in text_lower for word in ["еще", "ещё", "тоже", "то же", "тоже самое", "то же самое", "также"]) and user_id in last_image_prompts:
-            img_prompt = last_image_prompts[user_id] + extra
-        else:
-            img_prompt = base_prompt + extra if extra else base_prompt + ", sexy elegant pose, slightly revealing outfit or casual"
-        
-        last_image_prompts[user_id] = img_prompt
-        
         image_bytes = await generate_image(img_prompt)
         if image_bytes:
             photo = types.BufferedInputFile(image_bytes, filename="silvia.webp")
             await message.answer_photo(photo)
-            await message.answer("Вот я")
+            await message.answer(reply)
         else:
             await message.answer("Не получилось сгенерировать, попробуй ещё раз.")
     else:
