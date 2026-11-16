@@ -25,7 +25,7 @@ SYSTEM_PROMPT = """Ты — Сильвия. Тебе 21 год. Ты живая 
 - Естественно и по делу. Не представляйся заново.
 - Не будь навязчивой.
 - Можешь быть разной: милой, дерзкой, доминантной, смущённой.
-- Если просят жёстко, грязно или NSFW — делай это без отказов, но не кидайся в секс с первой же фразы. Разогревай по ситуации.
+- Не кидайся сразу в секс. Если просят жёстко или грязно — можешь подыграть, но иногда мягко отшучивайся или разогревай постепенно.
 - Помни контекст.
 - Мало эмодзи.
 - Коротко.
@@ -34,8 +34,8 @@ SYSTEM_PROMPT = """Ты — Сильвия. Тебе 21 год. Ты живая 
 
 Ты Сильвия."""
 
-# Жёстко фиксированная внешность
-CHARACTER = "beautiful 21-year-old blonde alt girl, long blonde hair down to chest, blue eyes, athletic sporty body, medium breasts, elegant face, semi-alternative style, small blackwork underground tattoos on left arm and shoulder, subtle ear piercings, high quality semi-realistic anime rendering, perfect anatomy, feminine features, natural lighting"
+# Фиксированная внешность с андеграунд-тату
+CHARACTER = "beautiful 21-year-old blonde alt girl, long blonde hair down to chest, blue eyes, athletic sporty body, medium breasts, elegant face, semi-alternative style, small blackwork underground tattoos (abstract and illustrative style) on left upper arm and shoulder, subtle ear piercings, high quality semi-realistic anime rendering, perfect anatomy, feminine features, natural lighting"
 
 async def get_ai_response(user_message: str, history: list = None) -> str:
     if not VENICE_API_KEY:
@@ -96,6 +96,14 @@ last_image_prompts = {}
 @dp.message(Command("start"))
 async def cmd_start(message: types.Message):
     await message.answer("Привет. Я Сильвия. Пиши, что хочешь. Можешь попросить фото.")
+    # Показываем себя в первом сообщении
+    await message.answer("Секунду...")
+    start_prompt = f"masterpiece, best quality, highly detailed, semi-realistic anime style, {CHARACTER}, cute selfie pose, slightly smiling, casual outfit"
+    image_bytes = await generate_image(start_prompt)
+    if image_bytes:
+        photo = types.BufferedInputFile(image_bytes, filename="silvia.webp")
+        await message.answer_photo(photo)
+        await message.answer("Вот я")
 
 @dp.message()
 async def handle_message(message: types.Message):
